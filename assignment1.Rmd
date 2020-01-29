@@ -1,6 +1,6 @@
 ---
 title: "Statistical assignment 1"
-author: "[add your name and candidate number here]"
+author: "[Alhoussein Nasser Candidate number: 142905]"
 date: "[add date here]"
 output: github_document
 ---
@@ -15,7 +15,8 @@ In this assignment you will work with the individual level data from wave 8 of t
 
 ```{r}
 library(tidyverse)
-Data <- ...
+Data <- read_tsv("/Users/alhousseinnasser/Downloads/UKDA-6614-tab 2/tab/ukhls_w8/h_indresp.tab")
+view(Data)
 ```
 
 Now you have got your data frame stored as Data. 
@@ -30,7 +31,7 @@ Complete the code below to select those variables from the data frame and save t
 
 ```{r}
 Data <- Data %>%
-        select(...)
+        select(pidp, h_eumem, h_sex_dv, h_age_dv, h_memorig)    
 ```
 
 ## Filter observations (10 points)
@@ -39,7 +40,7 @@ To make nationally representative estimates from the Understanding Society data 
 
 ```{r}
 Data <- Data %>%
-        filter(...)
+        filter(h_memorig == 1)
 ```
 
 ## Recode data (20 points)
@@ -64,11 +65,24 @@ In all cases, we want to create new variables.
 
 ```{r}
 Data <- Data %>%
-        mutate(EU = ...
+        mutate(EU = case_when( 
+          h_eumem == 1 ~ 1,
+          h_eumem == 2 ~ 0)
+ 
       
         ) %>%
-        mutate(sex = ...) %>%
-        mutate(agegr = ...
+        mutate(sex = case_when(
+          h_sex_dv == 1 ~ "male", 
+          h_sex_dv == 2 ~ "female"
+        )) %>%
+        mutate(agegr = case_when(
+              between(h_age_dv, 16, 25) ~ "16 to 25",
+              between(h_age_dv, 26, 40) ~ "26 to 40",
+              between(h_age_dv, 41, 55) ~ "41 to 55",
+              between(h_age_dv, 56, 70) ~ "56 to 70",
+              h_age_dv > 70 ~ "over 70"
+        )  
+             
         )
 
 ```
@@ -78,12 +92,14 @@ Data <- Data %>%
 Let us **dplyr** to calculate how many people in the sample supported Remain and Leave, both as absolute numbers and percentages.
 
 ```{r}
-Data %>%
-        ...
+Data %>%  filter(EU > -1 )%>%
+     count(EU) %>%
+  mutate(perc = (n / sum(n)) * 100)   
         
 ```
 
-Write a couple of sentences with the interpretation of this result. How this compares with the result of the 2016 referendum? Why?
+Write a couple of sentences with the interpretation of this result. How this compares with the result of the 2016 referendum? Why?    
+45.6492% voted to leave, 54.3508% voted to remain. Assuming that the unavailable data I ignored would have not affected the overall percentages by a significant margin, the results show a majority vote to remain in the EU with a difference of over 8%. This is a more decisive difference when compared to the 2016 referendum which resulted in a majority vote for leaving the au by a margin of over 3%. This shows a notable shift in opinion since 2016.
 
 ## Summarise data by sex and age (30 points)
 
@@ -91,10 +107,36 @@ Now let us look at the support for Leave and Remain by sex and age. Use your new
 
 
 ```{r}
-Data %>%
-        ...
+Data %>%  
+  filter(EU >-1 & (sex == "male" | sex == "female")) %>%
+  count( sex, EU, agegr) %>% 
+  mutate(perc = (n / sum(n)) * 100)
+
+Data %>%  
+  filter(EU >-1 & (sex == "female")) %>%
+  count( sex, EU) %>% 
+  mutate(perc = (n / sum(n)) * 100)
+
+Data %>%  
+  filter(EU >-1 & (sex == "male")) %>%
+  count( sex, EU) %>% 
+  mutate(perc = (n / sum(n)) * 100)
+
+Data %>%  
+  filter(EU > -1 & (sex == "female") & (agegr == "56 to 70")) %>%
+  count( sex, EU, agegr) %>% 
+  mutate(perc = (n / sum(n)) * 100)
+
+
+
+
+
+
+
         
 ```
 
 
 Write a couple of sentences interpreting your results.
+
+Based on the samples the majority of women voting to remain is much more significant than that of men. 56.73% of women voted to remain while 51.447% of men voted to remain. This shows that when combining all ages of men, the margin between those voting to remain and those voting to leave is fairly small. This can be shown when addressing how people voted based on their age. In both genders the majority of people aged between 16 and 55 voted to remain. The difference comes in ages above that where the majority of men aged 55 to 70 voted to leave while the majority of women voted to stay by a very narrow margin of less than 1% (28 people). The majority of people of both genders aged above 70 voted to leave. These results suggest that the younger the voter is the more likely they will vote to remain.
